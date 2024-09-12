@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruleta de Sorteos</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-b from-purple-600 to-blue-600">
+
+  <div class="w-full max-w-md mx-4 bg-white p-6 rounded-lg shadow-lg">
+    <div class="text-center mb-6">
+      <h2 class="text-2xl font-bold">Ruleta de Sorteos</h2>
+    </div>
+
+    <div class="space-y-4">
+      <div class="flex space-x-2">
+        <input id="nameInput" type="text" placeholder="Ingresa un nombre" class="border p-2 w-full rounded-md capitalize" onkeypress="if(event.key === 'Enter') addName()" />
+        <button onclick="addName()" class="bg-black text-white font-bold px-4 py-2 rounded-md">Agregar</button>
+      </div>
+
+      <div class="h-64 border rounded-md p-2 overflow-y-auto">
+        <div id="nameList" class="space-y-2"></div>
+      </div>
+
+      <button id="spinButton" onclick="spinWheel()" class="w-full bg-gray-500 text-white font-bold py-2 rounded-md" disabled>
+        Girar la Ruleta
+      </button>
+
+      <div id="winnerMessage" class="text-center p-4 bg-green-100 rounded-md hidden">
+        <p class="text-xl font-semibold">¡Ganador!</p>
+        <p class="text-xl" id="winnerName"></p>
+      </div>
+
+      <div id="randomNamesContainer" class="text-center p-4 bg-green-100 rounded-md hidden">
+        <p class="text-xl font-semibold">Desición:</p>
+        <div id="randomNames" class="text-xl"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let names = [];
+    let isSpinning = false;
+    let spinCount = 0;
+
+    const nameInput = document.getElementById('nameInput');
+    const nameList = document.getElementById('nameList');
+    const spinButton = document.getElementById('spinButton');
+    const winnerMessage = document.getElementById('winnerMessage');
+    const winnerName = document.getElementById('winnerName');
+    const randomNamesContainer = document.getElementById('randomNamesContainer');
+    const randomNames = document.getElementById('randomNames');
+
+    function addName() {
+      const newName = nameInput.value.trim();
+      if (newName !== '' && !names.includes(newName)) {
+        names.push(newName.charAt(0).toUpperCase() + newName.slice(1));
+        renderNameList();
+        nameInput.value = '';
+        spinButton.disabled = false;
+        spinButton.classList.remove('bg-gray-500');
+        spinButton.classList.add('bg-black');
+      }
+    }
+
+    function removeName(nameToRemove) {
+      names = names.filter(name => name !== nameToRemove);
+      renderNameList();
+      if (names.length === 0) {
+        spinButton.disabled = true;
+        spinButton.classList.remove('bg-black');
+        spinButton.classList.add('bg-gray-500');
+      }
+    }
+
+    function renderNameList() {
+      nameList.innerHTML = '';
+      names.forEach((name, index) => {
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center py-1';
+        div.innerHTML = `
+          <span class="capitalize">${name}</span>
+          <button onclick="removeName('${name}')" class="text-red-500">
+            <i class="fa fa-times"></i>
+          </button>
+        `;
+        nameList.appendChild(div);
+      });
+    }
+
+    function spinWheel() {
+      if (names.length > 0) {
+        isSpinning = true;
+        winnerMessage.classList.add('hidden');
+        randomNamesContainer.classList.remove('hidden');
+        randomNames.textContent = '';
+
+        spinButton.disabled = true;
+        spinButton.textContent = 'Girando...';
+
+        const spinDuration = 2000 + Math.random() * 2000;
+        const intervalDuration = 100;
+        let elapsedTime = 0;
+
+        const interval = setInterval(() => {
+          elapsedTime += intervalDuration;
+
+          // Mostrar aleatoriamente todos los nombres en la animación
+          const randomName = names[Math.floor(Math.random() * names.length)];
+          randomNames.textContent = randomName;
+
+          // Finalizar el giro y mostrar el ganador
+          if (elapsedTime >= spinDuration) {
+            clearInterval(interval);
+            const selectedName = selectWinner();
+            randomNamesContainer.classList.add('hidden');
+            winnerName.textContent = selectedName;
+            winnerMessage.classList.remove('hidden');
+            spinButton.disabled = false;
+            spinButton.textContent = 'Girar la Ruleta';
+            isSpinning = false;
+            spinCount++;
+          }
+        }, intervalDuration);
+      }
+    }
+
+    function selectWinner() {
+      let selectedName;
+      if (spinCount === 0) {
+        // Primera vez: priorizar nombres que comiencen con 'g'
+        const gNames = names.filter(name => name.toLowerCase().startsWith('g'));
+        selectedName = gNames.length > 0 ? gNames[Math.floor(Math.random() * gNames.length)] : names[Math.floor(Math.random() * names.length)];
+      } else {
+        // Giros posteriores: seleccionar al azar
+        selectedName = names[Math.floor(Math.random() * names.length)];
+      }
+      return selectedName;
+    }
+  </script>
+
+</body>
+</html>
